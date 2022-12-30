@@ -46,7 +46,9 @@ module cetus_amm::amm_swap {
 
         locked_liquidity: Coin<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>,
 
-        protocol_fee_to: address
+        protocol_fee_to: address,
+
+        total_supply: u128
     }
 
     struct InitPoolEvent has store, drop {
@@ -101,7 +103,7 @@ module cetus_amm::amm_swap {
         swap_fee_events: EventHandle<SwapFeeEvent>,
     }
 
-    public fun init_pool<CoinTypeA, CoinTypeB>(_account: &signer, _protocol_fee_to: address){   
+    public fun init_pool<CoinTypeA, CoinTypeB>(_account: &signer, _protocol_fee_to: address){
         abort EFUNCTION_DEPRECATED
     }
 
@@ -123,7 +125,7 @@ module cetus_amm::amm_swap {
 
          //reigister lp coin
         let(burn_capability, mint_capability) = register_liquidity_coin<CoinTypeA, CoinTypeB>(account);
-        
+
         //make pool
         let pool = make_pool<CoinTypeA, CoinTypeB>(protocol_fee_to, burn_capability, mint_capability);
         move_to(account, pool);
@@ -137,14 +139,14 @@ module cetus_amm::amm_swap {
 
     public fun mint_and_emit_event<CoinTypeA, CoinTypeB>(
         _account: &signer,
-        _coinA: Coin<CoinTypeA>, 
+        _coinA: Coin<CoinTypeA>,
         _coinB: Coin<CoinTypeB>): Coin<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>{
         abort EFUNCTION_DEPRECATED
     }
 
     public(friend) fun mint_and_emit_event_v2<CoinTypeA, CoinTypeB>(
         account: address,
-        coinA: Coin<CoinTypeA>, 
+        coinA: Coin<CoinTypeA>,
         coinB: Coin<CoinTypeB>): Coin<PoolLiquidityCoin<CoinTypeA, CoinTypeB>> acquires Pool, PoolSwapEventHandle {
         let amount_a = (coin::value(&coinA) as u128);
         let amount_b = (coin::value(&coinB) as u128);
@@ -162,10 +164,10 @@ module cetus_amm::amm_swap {
     }
 
     fun mint<CoinTypeA, CoinTypeB>(
-        coinA: Coin<CoinTypeA>, 
+        coinA: Coin<CoinTypeA>,
         coinB: Coin<CoinTypeB>): Coin<PoolLiquidityCoin<CoinTypeA, CoinTypeB>> acquires Pool {
         amm_config::assert_pause();
-        
+
         let (reserve_a, reserve_b) = get_reserves<CoinTypeA, CoinTypeB>();
 
         let pool = borrow_global_mut<Pool<CoinTypeA, CoinTypeB>>(amm_config::admin_address());
@@ -180,10 +182,11 @@ module cetus_amm::amm_swap {
             liquidity = sqrt(amountA * amountB) - MINIMUM_LIQUIDITY;
             let locked_liquidity = coin::mint<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>((MINIMUM_LIQUIDITY as u64), &pool.mint_capability); // permanently lock the first MINIMUM_LIQUIDITY tokens
             coin::merge(&mut pool.locked_liquidity, locked_liquidity);
+            pool.total_supply = pool.total_supply + MINIMUM_LIQUIDITY;
         } else {
             assert!(amountB == amm_math::quote(amountA, reserve_a, reserve_b)
              || amountA == amm_math::quote(amountB, reserve_b, reserve_a), error::internal(ELIQUIDITY_CALC_INVALID));
-            liquidity = min(amm_math::safe_mul_div_u128(amountA,total_supply,reserve_a), 
+            liquidity = min(amm_math::safe_mul_div_u128(amountA,total_supply,reserve_a),
                             amm_math::safe_mul_div_u128(amountB,total_supply,reserve_b));
         };
 
@@ -191,6 +194,8 @@ module cetus_amm::amm_swap {
 
         coin::merge(&mut pool.coin_a, coinA);
         coin::merge(&mut pool.coin_b, coinB);
+
+        pool.total_supply = pool.total_supply + liquidity;
 
         coin::mint<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>((liquidity as u64), &pool.mint_capability)
     }
@@ -217,6 +222,7 @@ module cetus_amm::amm_swap {
             amount_a,
             amount_b,
         });
+
         (a_token, b_token)
     }
 
@@ -229,11 +235,13 @@ module cetus_amm::amm_swap {
         let reserve_b = (coin::value(&pool.coin_b) as u128);
         let total_supply = *option::borrow(&coin::supply<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>());
         let amount0 = (amm_math::safe_mul_div_u128(to_burn_value,reserve_a,total_supply) as u64);
-        let amount1 = (amm_math::safe_mul_div_u128(to_burn_value,reserve_b,total_supply) as u64); 
-        assert!(amount0 > 0 && amount1 > 0, error::internal(ELIQUIDITY_SWAP_BURN_CALC_INVALID)); 
+        let amount1 = (amm_math::safe_mul_div_u128(to_burn_value,reserve_b,total_supply) as u64);
+        assert!(amount0 > 0 && amount1 > 0, error::internal(ELIQUIDITY_SWAP_BURN_CALC_INVALID));
 
         coin::burn(to_burn, &pool.burn_capability);
-        
+
+        pool.total_supply = pool.total_supply - to_burn_value;
+
         (coin::extract(&mut pool.coin_a , amount0), coin::extract(&mut pool.coin_b, amount1))
     }
 
@@ -267,7 +275,7 @@ module cetus_amm::amm_swap {
                 a_in: coin_a_in_value,
                 a_out: (coin::value<CoinTypeA>(&coin_a_out) as u128),
                 b_in: coin_b_in_value,
-                b_out: (coin::value<CoinTypeB>(&coin_b_out) as u128) 
+                b_out: (coin::value<CoinTypeB>(&coin_b_out) as u128)
             }
         );
         (coin_a_out, coin_b_out, coin_a_fee, coin_b_fee)
@@ -277,7 +285,7 @@ module cetus_amm::amm_swap {
         _coin_a_in: Coin<CoinTypeA>,
         _coin_b_out: u128,
         _coin_b_in: Coin<CoinTypeB>,
-        _coin_a_out: u128, 
+        _coin_a_out: u128,
     ): (Coin<CoinTypeA>, Coin<CoinTypeB>, Coin<CoinTypeA>, Coin<CoinTypeB>) {
         abort EFUNCTION_DEPRECATED
     }
@@ -286,14 +294,14 @@ module cetus_amm::amm_swap {
         coin_a_in: Coin<CoinTypeA>,
         coin_b_out: u128,
         coin_b_in: Coin<CoinTypeB>,
-        coin_a_out: u128, 
+        coin_a_out: u128,
     ): (Coin<CoinTypeA>, Coin<CoinTypeB>, Coin<CoinTypeA>, Coin<CoinTypeB>) acquires Pool{
         amm_config::assert_pause();
 
         let a_in_value = coin::value(&coin_a_in);
         let b_in_value = coin::value(&coin_b_in);
         assert!(
-            a_in_value > 0 || b_in_value > 0,  
+            a_in_value > 0 || b_in_value > 0,
             error::internal(ECOIN_INSUFFICIENT));
 
         let (a_reserve, b_reserve) = get_reserves<CoinTypeA, CoinTypeB>();
@@ -307,16 +315,16 @@ module cetus_amm::amm_swap {
             let a_reserve_new = coin::value(&pool.coin_a);
             let b_reserve_new = coin::value(&pool.coin_b);
             let (fee_numerator, fee_denominator) = amm_config::get_trade_fee<CoinTypeA, CoinTypeB>();
-            
+
             let (a_adjusted, b_adjusted) = new_reserves_adjusted(
-                a_reserve_new, 
-                b_reserve_new, 
-                a_in_value, 
-                b_in_value, 
-                fee_numerator, 
+                a_reserve_new,
+                b_reserve_new,
+                a_in_value,
+                b_in_value,
+                fee_numerator,
                 fee_denominator);
 
-            
+
             assert_lp_value_incr(
                 a_reserve,
                 b_reserve,
@@ -345,6 +353,7 @@ module cetus_amm::amm_swap {
             burn_capability: burn_capability,
             locked_liquidity: coin::zero<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>(),
             protocol_fee_to: protocol_fee_to,
+            total_supply: 0,
         }
     }
 
@@ -410,8 +419,8 @@ module cetus_amm::amm_swap {
     }
 
     public fun handle_swap_protocol_fee<CoinTypeA, CoinTypeB>(
-        _signer_address: address, 
-        _token_a: Coin<CoinTypeA>, 
+        _signer_address: address,
+        _token_a: Coin<CoinTypeA>,
         _is_forward: bool) {
         abort EFUNCTION_DEPRECATED
     }
@@ -434,7 +443,7 @@ module cetus_amm::amm_swap {
         is_forward: bool
     ) acquires PoolSwapEventHandle, Pool {
         let (fee_handle, fee_out) = swap_fee_direct_deposit<CoinTypeA, CoinTypeB>(fee_address, coin_a, is_forward);
-        if (fee_handle) { 
+        if (fee_handle) {
              if (is_forward) {
                 emit_swap_fee_event<CoinTypeA, CoinTypeB>(signer_address, fee_address, fee_out, 0);
              } else {
@@ -521,7 +530,7 @@ module cetus_amm::amm_swap {
     ) {
         let cmp_order = amm_math::safe_compare_mul_u128(a_adjusted, b_adjusted, (a_reserve as u128) * (fee_denominator as u128), (b_reserve as u128) * (fee_denominator as u128));
         assert!(
-            (EQUAL == cmp_order || GREATER_THAN == cmp_order), 
+            (EQUAL == cmp_order || GREATER_THAN == cmp_order),
             error::internal(ESWAPOUT_CALC_INVALID));
     }
 }
