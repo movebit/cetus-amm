@@ -21,6 +21,7 @@ spec cetus_amm::amm_router {
         ensures coin::value(old_pool.coin_a) <= coin::value(new_pool.coin_a);
         ensures coin::value(old_pool.coin_b) <= coin::value(new_pool.coin_b);
         ensures coin::value(old_pool.coin_a) * coin::value(old_pool.coin_b) <= coin::value(new_pool.coin_a) * coin::value(new_pool.coin_b);
+        ensures old_pool.total_supply < new_pool.total_supply;
     }
 
     spec remove_liquidity_internal<CoinTypeA, CoinTypeB>(
@@ -39,6 +40,7 @@ spec cetus_amm::amm_router {
         ensures coin::value(old_pool.coin_a) >= coin::value(new_pool.coin_a);
         ensures coin::value(old_pool.coin_b) >= coin::value(new_pool.coin_b);
         ensures coin::value(old_pool.coin_a) * coin::value(old_pool.coin_b) >= coin::value(new_pool.coin_a) * coin::value(new_pool.coin_b);
+        ensures old_pool.total_supply > new_pool.total_supply;
     }
 
     spec swap_exact_coin_for_coin<CoinTypeA, CoinTypeB>(
@@ -56,6 +58,5 @@ spec cetus_amm::amm_router {
         // true: <Pool<CoinTypeA, CoinTypeB>>; false: <Pool<CoinTypeB, CoinTypeA>>
         let is_forward = amm_swap::get_pool_direction<CoinTypeA, CoinTypeB>();
         ensures !is_forward ==> coin::value(old_pool.coin_a) >= coin::value(new_pool.coin_a);
-        // ensures coin::value(old_pool.coin_a) * coin::value(old_pool.coin_b) <= coin::value(new_pool.coin_a) * coin::value(new_pool.coin_b);
     }
 }

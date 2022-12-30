@@ -22,10 +22,12 @@ spec cetus_amm::amm_swap {
 
         ensures coin::value(new_pool.coin_a) == coin::value(old_pool.coin_a) + amountA;
         ensures coin::value(new_pool.coin_b) == coin::value(old_pool.coin_b) + amountB;
-        ensures new_pool.total_supply > old_pool.total_supply;
+        // ensures new_pool.total_supply > old_pool.total_supply;
         // ensures old_pool.total_supply == 0 ==> MINIMUM_LIQUIDITY + to_mint_lp_value == new_pool.total_supply;
         // ensures old_pool.total_supply > 0 ==> old_pool.total_supply + to_mint_lp_value == new_pool.total_supply;
         // ensures amountA * coin::value(new_pool.coin_b) == amountB * coin::value(new_pool.coin_a);
+
+        // ensures old_pool.total_supply == 0 ==> coin::value(old_pool.locked_liquidity) == 0;
     }
 
     spec burn<CoinTypeA, CoinTypeB>(to_burn: Coin<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>): (Coin<CoinTypeA>, Coin<CoinTypeB>) {

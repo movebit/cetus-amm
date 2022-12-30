@@ -182,7 +182,9 @@ module cetus_amm::amm_swap {
             liquidity = sqrt(amountA * amountB) - MINIMUM_LIQUIDITY;
             let locked_liquidity = coin::mint<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>((MINIMUM_LIQUIDITY as u64), &pool.mint_capability); // permanently lock the first MINIMUM_LIQUIDITY tokens
             coin::merge(&mut pool.locked_liquidity, locked_liquidity);
-            pool.total_supply = pool.total_supply + MINIMUM_LIQUIDITY;
+            // pool.total_supply = pool.total_supply + MINIMUM_LIQUIDITY;
+            // If it is the following code, then `ensures new_pool.total_supply > old_pool.total_supply;` cannot pass.
+            pool.total_supply = MINIMUM_LIQUIDITY;
         } else {
             assert!(amountB == amm_math::quote(amountA, reserve_a, reserve_b)
              || amountA == amm_math::quote(amountB, reserve_b, reserve_a), error::internal(ELIQUIDITY_CALC_INVALID));
