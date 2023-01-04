@@ -13,14 +13,17 @@ spec cetus_amm::amm_router {
     ) {
         pragma verify = true;
 
-        // Old pool.
+        // Pool before adding liquidity.
         let old_pool = global<amm_swap::Pool<CoinTypeA, CoinTypeB>>(amm_config::admin_address());
-        // New pool.
+        // Pool after adding liquidity.
         let post new_pool = global<amm_swap::Pool<CoinTypeA, CoinTypeB>>(amm_config::admin_address());
 
-        ensures coin::value(old_pool.coin_a) <= coin::value(new_pool.coin_a);
-        ensures coin::value(old_pool.coin_b) <= coin::value(new_pool.coin_b);
-        ensures coin::value(old_pool.coin_a) * coin::value(old_pool.coin_b) <= coin::value(new_pool.coin_a) * coin::value(new_pool.coin_b);
+        // After liquidity is added, the reserves of coin_a and coin_b increase.
+        ensures coin::value(old_pool.coin_a) < coin::value(new_pool.coin_a);
+        ensures coin::value(old_pool.coin_b) < coin::value(new_pool.coin_b);
+        // K value increases after adding liquidity.
+        ensures coin::value(old_pool.coin_a) * coin::value(old_pool.coin_b) < coin::value(new_pool.coin_a) * coin::value(new_pool.coin_b);
+        // Increase in liquidity.
         ensures old_pool.total_supply < new_pool.total_supply;
     }
 
@@ -32,14 +35,17 @@ spec cetus_amm::amm_router {
     ) {
         pragma verify = true;
 
-        // Old pool.
+        // Pool before removing liquidity.
         let old_pool = global<amm_swap::Pool<CoinTypeA, CoinTypeB>>(amm_config::admin_address());
-        // New pool.
+        // Pool after removing liquidity.
         let post new_pool = global<amm_swap::Pool<CoinTypeA, CoinTypeB>>(amm_config::admin_address());
 
-        ensures coin::value(old_pool.coin_a) >= coin::value(new_pool.coin_a);
-        ensures coin::value(old_pool.coin_b) >= coin::value(new_pool.coin_b);
-        ensures coin::value(old_pool.coin_a) * coin::value(old_pool.coin_b) >= coin::value(new_pool.coin_a) * coin::value(new_pool.coin_b);
+        // After liquidity is removed, the reserves of coin_a and coin_b decrease.
+        ensures coin::value(old_pool.coin_a) > coin::value(new_pool.coin_a);
+        ensures coin::value(old_pool.coin_b) > coin::value(new_pool.coin_b);
+        // K value decreases after removing liquidity.
+        ensures coin::value(old_pool.coin_a) * coin::value(old_pool.coin_b) > coin::value(new_pool.coin_a) * coin::value(new_pool.coin_b);
+        // Decrease in liquidity.
         ensures old_pool.total_supply > new_pool.total_supply;
     }
 
@@ -50,13 +56,14 @@ spec cetus_amm::amm_router {
     ) {
         pragma verify = true;
 
-        // Old pool.
+        // The pool before swap.
         let old_pool = global<amm_swap::Pool<CoinTypeA, CoinTypeB>>(amm_config::admin_address());
-        // New pool.
+        // The pool after swap.
         let post new_pool = global<amm_swap::Pool<CoinTypeA, CoinTypeB>>(amm_config::admin_address());
 
-        // true: <Pool<CoinTypeA, CoinTypeB>>; false: <Pool<CoinTypeB, CoinTypeA>>
+        // is_forward:  true: <Pool<CoinTypeA, CoinTypeB>>; false: <Pool<CoinTypeB, CoinTypeA>>
         let is_forward = amm_swap::get_pool_direction<CoinTypeA, CoinTypeB>();
-        ensures !is_forward ==> coin::value(old_pool.coin_a) >= coin::value(new_pool.coin_a);
+        // If it is coin_a swap coin_b, then the reserve of coin_b decreases after the exchange, otherwise the reserve of coin_a decreases.
+        ensures if (is_forward) { coin::value(old_pool.coin_b) >= coin::value(new_pool.coin_b) } else { coin::value(old_pool.coin_a) >= coin::value(new_pool.coin_a) };
     }
 }

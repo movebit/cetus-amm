@@ -177,11 +177,17 @@ module cetus_amm::amm_swap {
         let amountB = (coin::value(&coinB) as u128);
 
         let total_supply = (*option::borrow(&coin::supply<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>()) as u128);
+        spec {
+            assume total_supply == pool.total_supply;
+        };
         let liquidity : u128;
         if (total_supply == 0) {
             liquidity = sqrt(amountA * amountB) - MINIMUM_LIQUIDITY;
             let locked_liquidity = coin::mint<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>((MINIMUM_LIQUIDITY as u64), &pool.mint_capability); // permanently lock the first MINIMUM_LIQUIDITY tokens
             coin::merge(&mut pool.locked_liquidity, locked_liquidity);
+            spec {
+                assume coin::value(pool.locked_liquidity) == MINIMUM_LIQUIDITY;
+            };
             // pool.total_supply = pool.total_supply + MINIMUM_LIQUIDITY;
             // If it is the following code, then `ensures new_pool.total_supply > old_pool.total_supply;` cannot pass.
             pool.total_supply = MINIMUM_LIQUIDITY;
