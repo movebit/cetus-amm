@@ -7,4 +7,4 @@ rev = '72421d32d77f1877ded478e96f5b95914de1df91'
 subdir = 'aptos-move/framework/aptos-framework'
 
 [addresses]
-cetus_amm = "0x2"
+cetus_amm = "0x2345"
