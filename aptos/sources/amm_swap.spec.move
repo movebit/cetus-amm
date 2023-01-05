@@ -36,9 +36,9 @@ spec cetus_amm::amm_swap {
         ensures coin::value(new_pool.coin_b) == coin::value(old_pool.coin_b) + amountB;
         // If the old LP value is 0, then the new LP value after minting is the liquidity of this casting plus the minimum liquidity,
         // otherwise the new LP value is the liquidity of this casting plus the old LP value.
-        ensures if (old_pool.total_supply == 0) { MINIMUM_LIQUIDITY + to_mint_lp_value == new_pool.total_supply } else { old_pool.total_supply + to_mint_lp_value == new_pool.total_supply };
+        ensures if (old_pool.ghost_total_supply == 0) { MINIMUM_LIQUIDITY + to_mint_lp_value == new_pool.ghost_total_supply } else { old_pool.ghost_total_supply + to_mint_lp_value == new_pool.ghost_total_supply };
         // If the old LP value is 0, the old locked_liquidity is also 0.
-        ensures old_pool.total_supply == 0 ==> coin::value(old_pool.locked_liquidity) == 0;
+        ensures old_pool.ghost_total_supply == 0 ==> coin::value(old_pool.locked_liquidity) == 0;
     }
 
     spec burn<CoinTypeA, CoinTypeB>(to_burn: Coin<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>): (Coin<CoinTypeA>, Coin<CoinTypeB>) {
@@ -61,6 +61,6 @@ spec cetus_amm::amm_swap {
         ensures coin::value(new_pool.coin_a) == coin::value(old_pool.coin_a) - amountA;
         ensures coin::value(new_pool.coin_b) == coin::value(old_pool.coin_b) - amountB;
         // Burned LP tokens plus burned LP tokens are equal to LP tokens before burning.
-        ensures new_pool.total_supply + to_burn_lp_value == old_pool.total_supply;
+        ensures new_pool.ghost_total_supply + to_burn_lp_value == old_pool.ghost_total_supply;
     }
 }

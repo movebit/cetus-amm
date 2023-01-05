@@ -24,7 +24,7 @@ spec cetus_amm::amm_router {
         // K value increases after adding liquidity.
         ensures coin::value(old_pool.coin_a) * coin::value(old_pool.coin_b) < coin::value(new_pool.coin_a) * coin::value(new_pool.coin_b);
         // Increase in liquidity.
-        ensures old_pool.total_supply < new_pool.total_supply;
+        ensures old_pool.ghost_total_supply < new_pool.ghost_total_supply;
     }
 
     spec remove_liquidity_internal<CoinTypeA, CoinTypeB>(
@@ -46,7 +46,7 @@ spec cetus_amm::amm_router {
         // K value decreases after removing liquidity.
         ensures coin::value(old_pool.coin_a) * coin::value(old_pool.coin_b) > coin::value(new_pool.coin_a) * coin::value(new_pool.coin_b);
         // Decrease in liquidity.
-        ensures old_pool.total_supply > new_pool.total_supply;
+        ensures old_pool.ghost_total_supply > new_pool.ghost_total_supply;
     }
 
     spec swap_exact_coin_for_coin<CoinTypeA, CoinTypeB>(

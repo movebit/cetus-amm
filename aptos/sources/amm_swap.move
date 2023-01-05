@@ -48,7 +48,7 @@ module cetus_amm::amm_swap {
 
         protocol_fee_to: address,
 
-        total_supply: u128
+        ghost_total_supply: u128
     }
 
     struct InitPoolEvent has store, drop {
@@ -178,7 +178,7 @@ module cetus_amm::amm_swap {
 
         let total_supply = (*option::borrow(&coin::supply<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>()) as u128);
         spec {
-            assume total_supply == pool.total_supply;
+            assume total_supply == pool.ghost_total_supply;
         };
         let liquidity : u128;
         if (total_supply == 0) {
@@ -188,9 +188,9 @@ module cetus_amm::amm_swap {
             spec {
                 assume coin::value(pool.locked_liquidity) == MINIMUM_LIQUIDITY;
             };
-            // pool.total_supply = pool.total_supply + MINIMUM_LIQUIDITY;
-            // If it is the following code, then `ensures new_pool.total_supply > old_pool.total_supply;` cannot pass.
-            pool.total_supply = MINIMUM_LIQUIDITY;
+            // pool.ghost_total_supply = pool.ghost_total_supply + MINIMUM_LIQUIDITY;
+            // If it is the following code, then `ensures new_pool.ghost_total_supply > old_pool.ghost_total_supply;` cannot pass.
+            pool.ghost_total_supply = MINIMUM_LIQUIDITY;
         } else {
             assert!(amountB == amm_math::quote(amountA, reserve_a, reserve_b)
              || amountA == amm_math::quote(amountB, reserve_b, reserve_a), error::internal(ELIQUIDITY_CALC_INVALID));
@@ -203,7 +203,7 @@ module cetus_amm::amm_swap {
         coin::merge(&mut pool.coin_a, coinA);
         coin::merge(&mut pool.coin_b, coinB);
 
-        pool.total_supply = pool.total_supply + liquidity;
+        pool.ghost_total_supply = pool.ghost_total_supply + liquidity;
 
         coin::mint<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>((liquidity as u64), &pool.mint_capability)
     }
@@ -248,7 +248,7 @@ module cetus_amm::amm_swap {
 
         coin::burn(to_burn, &pool.burn_capability);
 
-        pool.total_supply = pool.total_supply - to_burn_value;
+        pool.ghost_total_supply = pool.ghost_total_supply - to_burn_value;
 
         (coin::extract(&mut pool.coin_a , amount0), coin::extract(&mut pool.coin_b, amount1))
     }
@@ -361,7 +361,7 @@ module cetus_amm::amm_swap {
             burn_capability: burn_capability,
             locked_liquidity: coin::zero<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>(),
             protocol_fee_to: protocol_fee_to,
-            total_supply: 0,
+            ghost_total_supply: 0,
         }
     }
 
