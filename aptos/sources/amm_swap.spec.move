@@ -15,8 +15,8 @@ spec cetus_amm::amm_swap {
     }
 
     spec burn<CoinTypeA, CoinTypeB>(to_burn: Coin<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>): (Coin<CoinTypeA>, Coin<CoinTypeB>) {
-      pragma verify = true;
+        pragma verify = true;
 
-      update total_supply = total_supply - coin::value(to_burn);
+        update total_supply = total_supply - coin::value(to_burn);
     }
 }
