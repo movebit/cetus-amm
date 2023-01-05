@@ -32,6 +32,6 @@ spec cetus_amm::amm_swap {
         // otherwise the new LP value is the liquidity of this casting plus the old LP value.
         ensures if (old_ghost_total_supply == 0) { MINIMUM_LIQUIDITY + to_mint_lp_value == new_ghost_total_supply } else { old_ghost_total_supply + to_mint_lp_value == new_ghost_total_supply };
         // If the old LP value is 0, the old locked_liquidity is also 0.
-        // ensures old_ghost_total_supply == 0 ==> coin::value(old_pool.locked_liquidity) == 0;
+        ensures old_ghost_total_supply == 0 ==> coin::value(old_pool.locked_liquidity) == 0;
     }
 }
