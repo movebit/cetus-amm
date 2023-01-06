@@ -24,8 +24,10 @@ spec cetus_amm::amm_swap {
         let post new_pool = global<Pool<CoinTypeA, CoinTypeB>>(amm_config::admin_address());
 
         let liquidity = if (ghost_total_supply == 0) {
+            // Error: The error message is at the bottom of the file.
             sqrt(amountA * amountB)
         } else {
+            // Error: The error message is at the bottom of the file.
             min(amountA * ghost_total_supply / old_pool.coin_a, amountB * ghost_total_supply / old_pool.coin_b)
         };
         update ghost_total_supply = ghost_total_supply + liquidity;
@@ -47,3 +49,31 @@ spec cetus_amm::amm_swap {
         update ghost_total_supply = ghost_total_supply - coin::value(to_burn);
     }
 }
+
+// error: calling impure function `amm_math::sqrt` is not allowed
+//    /Users/yoyoping/Documents/workspace/block-chain/move/aptos/cetus-amm/aptos/sources/amm_swap.spec.move:27:13
+//
+// 28              sqrt(amountA * amountB)
+//                 ^^^^^^^^^^^^^^^^^^^^^^^
+//
+//    = impure function `amm_math::sqrt(u128): u128`
+
+// error: no matching declaration of `/`
+//     /Users/yoyoping/Documents/workspace/block-chain/move/aptos/cetus-amm/aptos/sources/amm_swap.spec.move:29:17
+//
+// 31              min(amountA * ghost_total_supply / old_pool.coin_a, amountB * ghost_total_supply / old_pool.coin_b)
+//                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//
+//    = outruled candidate `/(num, num): num` (expected `num` but found `coin::Coin<#0>` for argument 2)
+
+// error: no matching declaration of `/`
+//     /Users/yoyoping/Documents/workspace/block-chain/move/aptos/cetus-amm/aptos/sources/amm_swap.spec.move:29:65
+//
+// 31              min(amountA * ghost_total_supply / old_pool.coin_a, amountB * ghost_total_supply / old_pool.coin_b)
+//                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//
+//    = outruled candidate `/(num, num): num` (expected `num` but found `coin::Coin<#1>` for argument 2)
+
+// {
+//   "Error": "Move Prover failed: exiting with model building errors"
+// }
