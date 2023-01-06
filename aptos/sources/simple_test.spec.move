@@ -20,5 +20,5 @@ spec cetus_amm::simple_test {
 //                                            ^^^^^^
 
 // {
-//   "Error": "Move compilation failed: extended checks failed"
+//   "Error": "Move Prover failed: exiting with model building errors"
 // }
