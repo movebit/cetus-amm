@@ -12,6 +12,7 @@ spec cetus_amm::amm_router {
         amount_b_min: u128) {
         pragma verify = true;
 
+        // Error: The error message is at the bottom of the file.
         let total_supply = get_total_supply<amm_swap::PoolLiquidityCoin<CoinTypeA, CoinTypeB>>();
     }
 
@@ -28,3 +29,8 @@ spec cetus_amm::amm_router {
       value
     }
 }
+
+// {
+//   "Error": "Move Prover failed: [internal] boogie exited with compilation errors:\n/Users/yoyoping/Documents/workspace/block-chain/move/aptos/cetus-amm/aptos/boogie.bpl(5379,277):
+//     Error: use of undeclared function: $1_aggregator_$read\n1 name resolution errors detected in /Users/yoyoping/Documents/workspace/block-chain/move/aptos/cetus-amm/aptos/boogie.bpl\n"
+// }

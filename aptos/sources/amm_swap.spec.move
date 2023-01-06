@@ -11,7 +11,7 @@ spec cetus_amm::amm_swap {
         coinB: Coin<CoinTypeB>): Coin<PoolLiquidityCoin<CoinTypeA, CoinTypeB>> {
         pragma verify = true;
 
-        update total_supply = total_supply + coin::value(result);
+        // update total_supply = total_supply + coin::value(result);
     }
 
     spec burn<CoinTypeA, CoinTypeB>(to_burn: Coin<PoolLiquidityCoin<CoinTypeA, CoinTypeB>>): (Coin<CoinTypeA>, Coin<CoinTypeB>) {
