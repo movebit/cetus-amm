@@ -55,7 +55,7 @@ module cetus_amm::amm_math {
     }
 
     public fun min(x: u128, y: u128): u128 {
-        if (x < y) x else y 
+        if (x < y) x else y
     }
 
     #[test]
