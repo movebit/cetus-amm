@@ -89,4 +89,23 @@ spec cetus_amm::amm_swap {
         // The current remaining LP tokens plus the burnt LP tokens are equal to the LP tokens before the burn.
         ensures new_ghost_total_supply + to_burn_lp_value == old_ghost_total_supply;
     }
+
+    spec swap_and_emit_event_v2<CoinTypeA, CoinTypeB>(
+        account: address,
+        coin_a_in: Coin<CoinTypeA>,
+        coin_b_out: u128,
+        coin_b_in: Coin<CoinTypeB>,
+        coin_a_out: u128
+    ) :(Coin<CoinTypeA>, Coin<CoinTypeB>, Coin<CoinTypeA>, Coin<CoinTypeB>) {
+        pragma verify = true;
+
+        // Pool before removing liquidity.
+        let old_pool = global<Pool<CoinTypeA, CoinTypeB>>(amm_config::admin_address());
+        // Pool after removing liquidity.
+        let post new_pool = global<Pool<CoinTypeA, CoinTypeB>>(amm_config::admin_address());
+
+        // After the exchange, the amount added to the pool is less than the amount required for the exchange.
+        ensures coin::value(new_pool.coin_a) - coin::value(old_pool.coin_a) <= coin::value(coin_a_in);
+        ensures coin::value(new_pool.coin_b) - coin::value(old_pool.coin_b) <= coin::value(coin_b_in);
+    }
 }
