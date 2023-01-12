@@ -13,6 +13,8 @@ spec cetus_amm::amm_swap {
         invariant coin::value(coin_b) != 0 ==> coin::value(coin_a) != 0;
         invariant coin::value(coin_a) == 0 ==> coin::value(coin_b) == 0;
         invariant coin::value(coin_b) == 0 ==> coin::value(coin_a) == 0;
+        // If there is no liquidity in the pool, then the token reserve in the pool is also 0.
+        // invariant ghost_total_supply == 0 ==> (coin::value(coin_a) == 0 && coin::value(coin_b) == 0);
     }
 
     spec mint<CoinTypeA, CoinTypeB>(
