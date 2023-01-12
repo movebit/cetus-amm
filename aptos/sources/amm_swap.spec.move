@@ -5,7 +5,7 @@ spec cetus_amm::amm_swap {
     }
 
     spec Pool {
-        // invariant coin::value(locked_liquidity) == 0 || coin::value(locked_liquidity) == 10;
+        invariant coin::value(locked_liquidity) == 0 || coin::value(locked_liquidity) == MINIMUM_LIQUIDITY;
         // If one of the reserves of coin_a and coin_b in the pool is 0, the other must also be 0,
         // and if one is not 0, then the other is not 0 either.
         invariant coin::value(coin_a) != 0 ==> coin::value(coin_b) != 0;
